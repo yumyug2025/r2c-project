@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT R2C // RESTRICTED ACCESS</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .font-heading {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+
+        /* Animations */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .cursor-blink::after {
+            content: '█';
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+            color: #ffffff;
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        .scanline-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            overflow: hidden;
+            opacity: 0.05;
+        }
+        .scanline {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, #ffffff, transparent);
+            animation: scanline 8s linear infinite;
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Utility */
+        .border-tech {
+            border: 1px solid #333;
+        }
+        
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Custom scrollbar for modal */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #444;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // --- ICONS (Native SVG Components) ---
+        const Icon = ({ size = 24, className = "", children, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Brain = (props) => (
+            <Icon {...props}>
+                <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+                <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+                <path d="M15 13a4.5 4.5 0 0 1-3-1.4 4.5 4.5 0 0 1-3 1.4" />
+            </Icon>
+        );
+
+        const Zap = (props) => (
+            <Icon {...props}>
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </Icon>
+        );
+
+        const Activity = (props) => (
+            <Icon {...props}>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </Icon>
+        );
+
+        const AlertTriangle = (props) => (
+            <Icon {...props}>
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+            </Icon>
+        );
+
+        const X = (props) => (
+            <Icon {...props}>
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+            </Icon>
+        );
+
+        const TestTube = (props) => (
+            <Icon {...props}>
+                <path d="M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2" />
+                <path d="M8.5 2h7" />
+                <path d="M14.5 16h-6" />
+            </Icon>
+        );
+
+        const ShieldAlert = (props) => (
+            <Icon {...props}>
+                <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+            </Icon>
+        );
+
+        // --- COMPONENTS ---
+        const Section = ({ children, className = "" }) => (
+            <section className={`px-6 py-16 md:py-24 max-w-4xl mx-auto ${className}`}>
+                {children}
+            </section>
+        );
+
+        const Heading = ({ children, className = "" }) => (
+            <h2 className={`font-heading text-2xl md:text-3xl font-black uppercase tracking-widest mb-8 ${className}`}>
+                {children}
+            </h2>
+        );
+
+        const TechBorder = ({ children, className = "" }) => (
+            <div className={`border border-neutral-800 p-6 relative group transition-all duration-300 hover:border-neutral-600 ${className}`}>
+                {/* Corner Accents */}
+                <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-white opacity-50"></div>
+                <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-white opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-white opacity-50"></div>
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-white opacity-50"></div>
+                {children}
+            </div>
+        );
+
+        const Button = ({ children, onClick, primary = false, href, className = "" }) => {
+            const baseClass = "inline-flex items-center justify-center px-8 py-4 font-mono text-sm font-bold uppercase tracking-wider transition-all duration-200 border border-white hover:bg-white hover:text-black focus:outline-none";
+            
+            if (href) {
+                return (
+                    <a href={href} className={`${baseClass} ${className}`}>
+                        {children}
+                    </a>
+                );
+            }
+
+            return (
+                <button onClick={onClick} className={`${baseClass} ${className}`}>
+                    {children}
+                </button>
+            );
+        };
+
+        const App = () => {
+            const [showIngredients, setShowIngredients] = useState(false);
+            const [isVisible, setIsVisible] = useState({});
+
+            // Handle fade-in animations
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    (entries) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) {
+                                setIsVisible(prev => ({
+                                    ...prev,
+                                    [entry.target.id]: true
+                                }));
+                            }
+                        });
+                    },
+                    { threshold: 0.1 }
+                );
+
+                const elements = document.querySelectorAll('[data-animate]');
+                elements.forEach((el) => {
+                    observer.observe(el);
+                });
+
+                return () => {
+                    elements.forEach((el) => {
+                        observer.unobserve(el);
+                    });
+                };
+            }, []);
+
+            return (
+                <div className="min-h-screen relative selection:bg-white selection:text-black">
+                    {/* Atmospheric Scanline */}
+                    <div className="scanline-container">
+                        <div className="scanline"></div>
+                    </div>
+
+                    {/* 1. HERO SECTION */}
+                    <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 relative border-b border-neutral-900">
+                        <div className={`fade-in-up ${isVisible.hero ? 'opacity-100 translate-y-0' : ''}`} 
+                             data-animate id="hero" style={{transitionDelay: '0.1s'}}>
+                            <div className="font-mono text-xs text-neutral-500 mb-4 tracking-[0.3em]">
+                                ACCESS LEVEL: BETA // ID: 882-X
+                            </div>
+                            <h1 className="font-heading text-6xl md:text-8xl font-black tracking-tight mb-2 cursor-blink">
+                                PROJECT R2C
+                            </h1>
+                            <p className="font-mono text-neutral-400 text-sm md:text-base tracking-wider max-w-lg mx-auto uppercase mt-4">
+                                Restricted Cognitive Performance Protocol<br/>
+                                <span className="text-white">Beta Evaluation Phase</span>
+                            </p>
+                        </div>
+
+                        <div className={`flex gap-8 md:gap-16 mt-16 fade-in-up ${isVisible.features ? 'opacity-100 translate-y-0' : ''}`} 
+                             data-animate id="features" style={{transitionDelay: '0.3s'}}>
+                            <div className="flex flex-col items-center gap-3 group">
+                                <div className="p-4 border border-neutral-800 rounded-full group-hover:border-white transition-colors duration-300">
+                                    <Brain size={24} />
+                                </div>
+                                <span className="text-xs tracking-widest text-neutral-400 group-hover:text-white">FOCUS</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-3 group">
+                                <div className="p-4 border border-neutral-800 rounded-full group-hover:border-white transition-colors duration-300">
+                                    <Activity size={24} />
+                                </div>
+                                <span className="text-xs tracking-widest text-neutral-400 group-hover:text-white">FLOW</span>
+                            </div>
+                            <div className="flex flex-col items-center gap-3 group">
+                                <div className="p-4 border border-neutral-800 rounded-full group-hover:border-white transition-colors duration-300">
+                                    <Zap size={24} />
+                                </div>
+                                <span className="text-xs tracking-widest text-neutral-400 group-hover:text-white">FUEL</span>
+                            </div>
+                        </div>
+
+                        <div className={`absolute bottom-8 text-neutral-600 text-[10px] tracking-widest uppercase fade-in-up ${isVisible.footerNote ? 'opacity-100 translate-y-0' : ''}`} 
+                             data-animate id="footerNote" style={{transitionDelay: '0.5s'}}>
+                            Not for Commercial Sale | 18+ Only
+                        </div>
+                    </div>
+
+                    {/* 2. WHAT IS R2C */}
+                    <Section className="text-center border-b border-neutral-900">
+                        <div data-animate id="about">
+                            <Heading>What is Project R2C?</Heading>
+                            <p className="text-neutral-300 leading-relaxed max-w-2xl mx-auto text-sm md:text-base">
+                                Project R2C is an experimental cognitive performance drink designed to support focus, mental flow, and clean energy.
+                                <br/><br/>
+                                It is currently distributed only as a beta research sample to collect real-world performance feedback.
+                            </p>
+                            <div className="mt-8 flex justify-center gap-4 text-xs text-neutral-500 font-bold uppercase tracking-widest">
+                                <span className="flex items-center gap-2"><X size={12}/> No Medical Claims</span>
+                                <span className="flex items-center gap-2"><X size={12}/> No Exaggerated Promises</span>
+                            </div>
+                        </div>
+                    </Section>
+
+                    {/* 3. HOW IT WORKS */}
+                    <Section>
+                        <div data-animate id="how-it-works">
+                            <div className="grid md:grid-cols-3 gap-6">
+                                <TechBorder>
+                                    <div className="mb-4 text-neutral-500"><Brain size={20} /></div>
+                                    <h3 className="font-heading font-bold text-lg mb-2">FOCUS</h3>
+                                    <p className="text-neutral-400 text-sm leading-relaxed">
+                                        Supports mental clarity and attention stability. Minimizes cognitive drift during high-load tasks.
+                                    </p>
+                                </TechBorder>
+                                <TechBorder>
+                                    <div className="mb-4 text-neutral-500"><Activity size={20} /></div>
+                                    <h3 className="font-heading font-bold text-lg mb-2">FLOW</h3>
+                                    <p className="text-neutral-400 text-sm leading-relaxed">
+                                        Helps maintain smooth, distraction-free cognitive momentum. Optimizes state-switching latency.
+                                    </p>
+                                </TechBorder>
+                                <TechBorder>
+                                    <div className="mb-4 text-neutral-500"><Zap size={20} /></div>
+                                    <h3 className="font-heading font-bold text-lg mb-2">FUEL</h3>
+                                    <p className="text-neutral-400 text-sm leading-relaxed">
+                                        Provides clean, measured stimulation without sugar. Sustained output vector.
+                                    </p>
+                                </TechBorder>
+                            </div>
+                        </div>
+                    </Section>
+
+                    {/* 4. HOW TO USE */}
+                    <Section className="bg-neutral-950 border-y border-neutral-900">
+                        <div data-animate id="protocol">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+                                <div className="flex-1">
+                                    <Heading className="mb-6">Protocol</Heading>
+                                    <ul className="space-y-6 text-sm">
+                                        <li className="flex gap-4">
+                                            <span className="font-heading font-black text-neutral-700 text-lg">01</span>
+                                            <p className="pt-1">Mix 1 sachet (5.3 g) with 200–250 ml cold water.</p>
+                                        </li>
+                                        <li className="flex gap-4">
+                                            <span className="font-heading font-black text-neutral-700 text-lg">02</span>
+                                            <p className="pt-1">Stir well. Real spices will settle. Swirl cup while drinking.</p>
+                                        </li>
+                                        <li className="flex gap-4">
+                                            <span className="font-heading font-black text-neutral-700 text-lg">03</span>
+                                            <p className="pt-1">Consume once daily. Ideally 20 minutes pre-task.</p>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div className="flex-shrink-0 p-6 border border-neutral-800 bg-black max-w-xs w-full">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <TestTube size={24} className="text-white"/>
+                                        <span className="text-[10px] bg-white text-black px-1 font-bold">SACHET DATA</span>
+                                    </div>
+                                    <div className="space-y-2 text-xs font-mono text-neutral-400">
+                                        <div className="flex justify-between border-b border-neutral-900 pb-1">
+                                            <span>NET WT</span>
+                                            <span className="text-white">5.3g</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-neutral-900 pb-1">
+                                            <span>CAFFEINE</span>
+                                            <span className="text-white">75mg</span>
+                                        </div>
+                                        <div className="flex justify-between pt-1">
+                                            <span>SUGAR</span>
+                                            <span className="text-white">0g</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Section>
+
+                    {/* 5. INGREDIENT PHILOSOPHY */}
+                    <Section className="text-center">
+                        <div data-animate id="philosophy">
+                            <Heading>Formulation Philosophy</Heading>
+                            <p className="text-neutral-400 mb-8 max-w-xl mx-auto text-sm">
+                                R2C uses a controlled blend of caffeine, amino acids, adaptogenic compounds, and electrolytes. 
+                                Exact formulation is under beta evaluation.
+                            </p>
+                            <Button onClick={() => setShowIngredients(true)}>
+                                [ View Full Ingredients ]
+                            </Button>
+                        </div>
+                    </Section>
+
+                    {/* 6. RESTRICTION WARNING */}
+                    <Section>
+                        <div data-animate id="warning">
+                            <div className="border-2 border-white p-8 relative overflow-hidden">
+                                {/* Warning stripes bg */}
+                                <div className="absolute top-0 right-0 p-2 opacity-10">
+                                    <ShieldAlert size={120} />
+                                </div>
+                                
+                                <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center">
+                                    <div className="bg-white text-black p-2">
+                                        <AlertTriangle size={32} strokeWidth={3} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-heading font-black text-xl mb-2">RESTRICTED R&D SAMPLE</h3>
+                                        <p className="text-sm text-neutral-300 max-w-lg mb-2">
+                                            This product is not intended for commercial sale. 
+                                            Distributed solely for beta testing and feedback collection.
+                                        </p>
+                                        <p className="text-xs text-neutral-500 font-bold uppercase">
+                                            Not recommended for individuals below 18 years of age.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </Section>
+
+                    {/* 7. FEEDBACK */}
+                    <Section className="text-center mb-12">
+                        <div data-animate id="feedback">
+                            <Heading>Beta Feedback Required</Heading>
+                            <p className="text-neutral-400 mb-8">
+                                Your experience directly influences the final protocol.
+                            </p>
+                            <div className="flex flex-col md:flex-row justify-center gap-4">
+                                <Button href="feedback.html">
+                                    📩 Submit Feedback
+                                </Button>
+                                <Button href="https://wa.me/919669955946?text=%2F%2F%20R2C%20FIELD%20REPORT%0A%0ASUBJECT%20ID%3A%20%5BEnter%20Name%5D%0AFOCUS%20LEVEL%3A%20%5B1-10%5D%0AOBSERVATIONS%3A%20">
+                                    📱 WhatsApp Feedback
+                                </Button>
+                            </div>
+                        </div>
+                    </Section>
+                    {/* 8. FOOTER */}
+                    <footer className="border-t border-neutral-900 py-12 px-6">
+                        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 font-mono text-xs text-neutral-600">
+                            <div>
+                                <div className="mb-2">PROJECT R2C — Experimental Cognitive Protocol</div>
+                                <div>TRACE ID: R2C-IND-001</div>
+                            </div>
+                            <div className="md:text-right">
+                                <div className="mb-2">FSSAI App No: 30251216122593699</div>
+                                <div>Feedback Protocol: +91 9669955946</div>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {/* INGREDIENTS MODAL */}
+                    {showIngredients && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop animate-in fade-in duration-200">
+                            <div className="bg-black border border-white max-w-2xl w-full p-6 relative shadow-2xl flex flex-col max-h-[90vh]">
+                                <button 
+                                    onClick={() => setShowIngredients(false)}
+                                    className="absolute top-4 right-4 text-neutral-500 hover:text-white z-10"
+                                >
+                                    <X size={24} />
+                                </button>
+                                
+                                {/* HEADER SECTION */}
+                                <div className="mb-6 border-b border-neutral-800 pb-4 shrink-0">
+                                    <h3 className="font-heading font-black text-xl md:text-2xl mb-2 text-white">
+                                        // ACTIVE COMPOUND SPECS
+                                    </h3>
+                                    <p className="font-mono text-xs text-neutral-400 tracking-wider">
+                                        BATCH: IND-001 | SERVING: 5.3G | TARGET: FLOW STATE
+                                    </p>
+                                </div>
+                                
+                                {/* SCROLLABLE CONTENT */}
+                                <div className="overflow-y-auto pr-2 space-y-8 font-mono text-xs md:text-sm custom-scrollbar">
+                                    
+                                    {/* SYSTEM 01 */}
+                                    <div>
+                                        <h4 className="font-bold mb-3 tracking-widest text-[#00ff41]">
+                                            TABLE 1: SYSTEM 01 - NEURO-KINETIC DRIVE
+                                        </h4>
+                                        <div className="w-full text-left border-t border-neutral-800">
+                                            <table className="w-full border-collapse">
+                                                <thead>
+                                                    <tr className="text-neutral-500 text-[10px] uppercase tracking-wider border-b border-neutral-800">
+                                                        <th className="py-2 text-left font-normal w-1/3">Component</th>
+                                                        <th className="py-2 text-left font-normal w-24">Dose</th>
+                                                        <th className="py-2 text-left font-normal">Ingredients (In Order of Wt)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-neutral-300">
+                                                    <tr className="border-b border-neutral-900">
+                                                        <td className="py-2 font-bold text-white align-top">Caffeine Anhydrous</td>
+                                                        <td className="py-2 font-bold text-white align-top">75 mg</td>
+                                                        <td className="py-2 text-left text-neutral-400 text-xs leading-relaxed">
+                                                            Precision Alertness Vector.
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="py-2 font-bold text-white align-top">R2C Neuro-Flow Blend</td>
+                                                        <td className="py-2 font-bold text-white align-top">1,300 mg</td>
+                                                        <td className="py-2 text-left text-neutral-400 text-xs leading-relaxed">
+                                                            Beta-Alanine, L-Theanine, GABA, Rhodiola Rosea Extract, L-Tryptophan.
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    {/* SYSTEM 02 */}
+                                    <div>
+                                        <h4 className="font-bold mb-3 tracking-widest text-[#00ff41]">
+                                            TABLE 2: SYSTEM 02 - CELLULAR RECOVERY
+                                        </h4>
+                                        <div className="w-full text-left border-t border-neutral-800">
+                                            <table className="w-full border-collapse">
+                                                <thead>
+                                                    <tr className="text-neutral-500 text-[10px] uppercase tracking-wider border-b border-neutral-800">
+                                                        <th className="py-2 text-left font-normal">Mineral Complex</th>
+                                                        <th className="py-2 text-left font-normal w-24">Dose</th>
+                                                        <th className="py-2 text-right font-normal">Type</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-neutral-300">
+                                                    <tr>
+                                                        <td className="py-2 font-bold text-white">Magnesium Matrix</td>
+                                                        <td className="py-2 font-bold text-white">225 mg</td>
+                                                        <td className="py-2 text-right text-neutral-400">Glycinate + Taurate</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    {/* SYSTEM 03 */}
+                                    <div>
+                                        <h4 className="font-bold mb-3 tracking-widest text-[#00ff41]">
+                                            TABLE 3: SYSTEM 03 - METABOLIC ROOTS
+                                        </h4>
+                                        <div className="w-full text-left border-t border-neutral-800">
+                                            <table className="w-full border-collapse">
+                                                <thead>
+                                                    <tr className="text-neutral-500 text-[10px] uppercase tracking-wider border-b border-neutral-800">
+                                                        <th className="py-2 text-left font-normal w-1/3">Proprietary Blend</th>
+                                                        <th className="py-2 text-left font-normal w-24">Total Dose</th>
+                                                        <th className="py-2 text-left font-normal">Ingredients Inside</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-neutral-300">
+                                                    <tr>
+                                                        <td className="py-2 font-bold text-white align-top">Electrolyte & Spice Core</td>
+                                                        <td className="py-2 font-bold text-white align-top">~ 3,700 mg</td>
+                                                        <td className="py-2 text-left text-neutral-400 text-xs leading-relaxed">
+                                                            Raw Mango Matrix, Black Salt, Rock Salt, Citric Acid, Malic Acid, Cumin, Pepper, Ginger, Monk Fruit.
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    {/* FOOTER NOTE */}
+                                    <div className="pt-4 border-t border-neutral-800 text-[10px] font-mono text-center">
+                                        <div className="flex justify-center gap-4 mb-2 font-bold text-white tracking-wider">
+                                            <span>ZERO SUGAR</span>
+                                            <span className="text-neutral-600">|</span>
+                                            <span>NATURAL PRECIPITATION EXPECTED</span>
+                                            <span className="text-neutral-600">|</span>
+                                            <span>SWIRL TO ACTIVATE</span>
+                                        </div>
+                                        <div className="text-neutral-500 leading-tight">
+                                            * MAX 3 SACHETS / 24 HOURS
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div className="mt-6 shrink-0">
+                                    <Button onClick={() => setShowIngredients(false)} className="w-full py-3 hover:bg-[#00ff41] hover:text-black hover:border-[#00ff41]">
+                                        ACKNOWLEDGE SPECS
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

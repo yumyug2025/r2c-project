@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIELD REPORT // SUBMIT DATA</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .font-heading {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Terminal Colors */
+        .text-terminal { color: #00ff41; }
+        .border-terminal { border-color: #00ff41; }
+        .bg-terminal { background-color: #00ff41; }
+        .focus-terminal:focus { border-color: #00ff41; outline: none; }
+        .hover-terminal:hover { background-color: #00ff41; color: #000000; border-color: #00ff41; }
+
+        /* Scanlines */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        .scanline-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            overflow: hidden;
+            opacity: 0.05;
+        }
+        .scanline {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, #ffffff, transparent);
+            animation: scanline 8s linear infinite;
+        }
+
+        /* Form Elements */
+        input, select, textarea {
+            background-color: transparent;
+            border-radius: 0; /* Square edges */
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        
+        /* Custom Range Slider */
+        input[type=range] {
+            height: 2px;
+            background: #333;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            background: #000;
+            border: 2px solid #00ff41;
+            cursor: pointer;
+            margin-top: -7px; 
+            border-radius: 0; /* Square thumb */
+        }
+        input[type=range]::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            background: #000;
+            border: 2px solid #00ff41;
+            cursor: pointer;
+            border-radius: 0;
+        }
+        input[type=range]:focus::-webkit-slider-thumb {
+            background: #00ff41;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom Select Arrow */
+        .select-wrapper {
+            position: relative;
+        }
+        .select-wrapper::after {
+            content: "▼";
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            color: #00ff41;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Initialize Supabase with your actual credentials
+        const supabaseUrl = 'https://ngpazbtcqpkklfdslvue.supabase.co';
+        const supabaseKey = 'sb_publishable_U4yhl1MfOPoxfZ_-yICDwA_mgy0cYEG';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Native Icon Component
+        const Icon = ({ size = 24, className = "", children, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+                {children}
+            </svg>
+        );
+        const ChevronLeft = (props) => <Icon {...props}><path d="m15 18-6-6 6-6"/></Icon>;
+
+        const FeedbackForm = () => {
+            const [formData, setFormData] = useState({
+                operativeId: '',
+                whatsapp: '',
+                city: '',
+                ingestionTime: 'Morning Protocol',
+                metabolicState: 'Fasted (Empty Stomach)',
+                baselineCondition: 'Optimal / Neutral',
+                targetObjective: 'Productivity / Deep Work',
+                otherObjective: '',
+                
+                // Performance
+                onsetDuration: '15 - 30 Mins (Standard)',
+                effectDuration: '3 - 4 Hours (Optimal)',
+                focusIntensity: 5,
+                
+                // Tolerance
+                sideEffects: 'NONE (Clean Energy)',
+                otherSideEffect: '',  // New field for specifying other side effects
+                flavorMatrix: 'Approved',
+                textureTolerance: 'Noticeable but Fine',
+                log: ''
+            });
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                
+                // Prepare data for submission with snake_case column names to match Supabase table
+                const feedbackData = {
+                    operative_id: formData.operativeId,
+                    whatsapp: formData.whatsapp,
+                    city: formData.city,
+                    ingestion_time: formData.ingestionTime,
+                    metabolic_state: formData.metabolicState,
+                    baseline_condition: formData.baselineCondition,
+                    target_objective: formData.targetObjective === 'Other (Specify)' 
+                        ? `Other: ${formData.otherObjective}` 
+                        : formData.targetObjective,
+                    onset_duration: formData.onsetDuration,
+                    effect_duration: formData.effectDuration,
+                    focus_intensity: formData.focusIntensity,
+                    side_effects: formData.sideEffects === 'Other (Specify in Log)' 
+                        ? `Other: ${formData.otherSideEffect || '[Not Specified]'}` 
+                        : formData.sideEffects,
+                    flavor_matrix: formData.flavorMatrix,
+                    texture_tolerance: formData.textureTolerance,
+                    log: formData.log
+                };
+
+                try {
+                    // Insert data into Supabase
+                    const { data, error } = await supabase
+                        .from('feedback')
+                        .insert([feedbackData]);
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    console.log("Feedback submitted:", data);
+                    alert("DATA TRANSMITTED TO R2C SERVER // THANK YOU OPERATIVE");
+                    
+                    // Reset form after successful submission
+                    setFormData({
+                        operativeId: '',
+                        whatsapp: '',
+                        city: '',
+                        ingestionTime: 'Morning Protocol',
+                        metabolicState: 'Fasted (Empty Stomach)',
+                        baselineCondition: 'Optimal / Neutral',
+                        targetObjective: 'Productivity / Deep Work',
+                        otherObjective: '',
+                        onsetDuration: '15 - 30 Mins (Standard)',
+                        effectDuration: '3 - 4 Hours (Optimal)',
+                        focusIntensity: 5,
+                        sideEffects: 'NONE (Clean Energy)',
+                        otherSideEffect: '',  // Reset the new field
+                        flavorMatrix: 'Approved',
+                        textureTolerance: 'Noticeable but Fine',
+                        log: ''
+                    });
+                } catch (error) {
+                    console.error("Error submitting feedback:", error);
+                    alert("TRANSMISSION FAILED // TRY AGAIN");
+                }
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleRangeChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: parseInt(value) }));
+            };
+
+            return (
+                <div className="min-h-screen relative p-6 md:p-12 max-w-3xl mx-auto">
+                     {/* Atmospheric Scanline */}
+                    <div className="scanline-container">
+                        <div className="scanline"></div>
+                    </div>
+
+                    {/* Back Link */}
+                    <a href="index.html" className="inline-flex items-center text-xs text-neutral-500 hover:text-white mb-12 tracking-widest uppercase transition-colors">
+                        <ChevronLeft size={16} className="mr-1" /> Return to Terminal
+                    </a>
+
+                    {/* Header */}
+                    <header className="mb-12 border-b border-neutral-800 pb-6 fade-in">
+                        <div className="text-terminal text-xs tracking-[0.2em] mb-2 font-bold">// SUBMIT FIELD REPORT</div>
+                        <h1 className="font-heading text-3xl md:text-5xl font-black text-white mb-2">FIELD REPORT</h1>
+                        <div className="flex items-center gap-4 text-xs font-mono">
+                            <span className="bg-white text-black px-1 font-bold">BATCH: IND-001</span>
+                            <span className="text-neutral-400">Complete all parameters for data accuracy.</span>
+                        </div>
+                    </header>
+
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-12 fade-in" style={{animationDelay: '0.1s'}}>
+                        
+                        {/* SECTION 1: IDENTITY */}
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-bold text-neutral-500 border-b border-neutral-900 pb-2 mb-4 tracking-widest">
+                                SECTOR 01 // OPERATIVE IDENTITY
+                            </h3>
+                            
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* 1. OPERATIVE ID */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Subject Name
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="operativeId"
+                                        value={formData.operativeId}
+                                        onChange={handleChange}
+                                        placeholder="EX: JOHN DOE"
+                                        className="w-full bg-transparent border border-white p-4 text-terminal font-mono placeholder-neutral-700 focus-terminal transition-colors"
+                                        required
+                                    />
+                                </div>
+                                
+                                {/* 2. SECURE COMMS */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Secure Comms (WhatsApp)
+                                    </label>
+                                    <input 
+                                        type="tel" 
+                                        name="whatsapp"
+                                        value={formData.whatsapp}
+                                        onChange={handleChange}
+                                        placeholder="+91..."
+                                        className="w-full bg-transparent border border-white p-4 text-terminal font-mono placeholder-neutral-700 focus-terminal transition-colors"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                             {/* 3. CITY */}
+                             <div className="space-y-3">
+                                <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                    Operational Base (City)
+                                </label>
+                                <input 
+                                    type="text" 
+                                    name="city"
+                                    value={formData.city}
+                                    onChange={handleChange}
+                                    placeholder="EX: MUMBAI / INDORE / REMOTE"
+                                    className="w-full bg-transparent border border-white p-4 text-terminal font-mono placeholder-neutral-700 focus-terminal transition-colors"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* SECTION 2: PROTOCOL CONTEXT */}
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-bold text-neutral-500 border-b border-neutral-900 pb-2 mb-4 tracking-widest">
+                                SECTOR 02 // PROTOCOL CONTEXT
+                            </h3>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* 4. TIMING */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Ingestion Time
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="ingestionTime"
+                                            value={formData.ingestionTime}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Morning Protocol">Morning Protocol</option>
+                                            <option value="Afternoon Window">Afternoon Window</option>
+                                            <option value="Evening Buffer">Evening Buffer</option>
+                                            <option value="Night Shift">Night Shift</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                {/* 5. METABOLIC STATE */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Metabolic State
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="metabolicState"
+                                            value={formData.metabolicState}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Fasted (Empty Stomach)">Fasted (Empty Stomach)</option>
+                                            <option value="Fed (Post-Meal)">Fed (Post-Meal)</option>
+                                            <option value="Hydrated (Water Only)">Hydrated (Water Only)</option>
+                                            <option value="Dehydrated (Low Intake)">Dehydrated (Low Intake)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* 6. BASELINE CONDITION */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Baseline Condition
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="baselineCondition"
+                                            value={formData.baselineCondition}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Optimal / Neutral">Optimal / Neutral</option>
+                                            <option value="Fatigued / Low Energy">Fatigued / Low Energy</option>
+                                            <option value="Stressed / Overloaded">Stressed / Overloaded</option>
+                                            <option value="Recovered / Rested">Recovered / Rested</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                {/* 7. TARGET OBJECTIVE */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Target Objective
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="targetObjective"
+                                            value={formData.targetObjective}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Productivity / Deep Work">Productivity / Deep Work</option>
+                                            <option value="Creative Output">Creative Output</option>
+                                            <option value="Physical Performance">Physical Performance</option>
+                                            <option value="Learning / Study">Learning / Study</option>
+                                            <option value="Social Engagement">Social Engagement</option>
+                                            <option value="Other (Specify)">Other (Specify)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* 8. OTHER OBJECTIVE SPECIFICATION */}
+                            {formData.targetObjective === 'Other (Specify)' && (
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Specify Other Objective
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="otherObjective"
+                                        value={formData.otherObjective}
+                                        onChange={handleChange}
+                                        placeholder="Describe your objective..."
+                                        className="w-full bg-transparent border border-white p-4 text-terminal font-mono placeholder-neutral-700 focus-terminal transition-colors"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* SECTION 3: PERFORMANCE METRICS */}
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-bold text-neutral-500 border-b border-neutral-900 pb-2 mb-4 tracking-widest">
+                                SECTOR 03 // PERFORMANCE METRICS
+                            </h3>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* 9. ONSET DURATION */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Onset Duration
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="onsetDuration"
+                                            value={formData.onsetDuration}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Instant (Under 5 Mins)">Instant (Under 5 Mins)</option>
+                                            <option value="Fast (5 - 15 Mins)">Fast (5 - 15 Mins)</option>
+                                            <option value="15 - 30 Mins (Standard)">15 - 30 Mins (Standard)</option>
+                                            <option value="Delayed (Over 30 Mins)">Delayed (Over 30 Mins)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                {/* 10. EFFECT DURATION */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Effect Duration
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="effectDuration"
+                                            value={formData.effectDuration}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Under 1 Hour">Under 1 Hour</option>
+                                            <option value="1 - 2 Hours">1 - 2 Hours</option>
+                                            <option value="2 - 3 Hours">2 - 3 Hours</option>
+                                            <option value="3 - 4 Hours (Optimal)">3 - 4 Hours (Optimal)</option>
+                                            <option value="Extended (4+ Hours)">Extended (4+ Hours)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 11. FOCUS INTENSITY */}
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                    Focus Intensity (Scale: 1-10)
+                                    <span className="ml-2 text-terminal">{formData.focusIntensity}/10</span>
+                                </label>
+                                <div className="pt-2">
+                                    <input 
+                                        type="range" 
+                                        name="focusIntensity"
+                                        min="1"
+                                        max="10"
+                                        value={formData.focusIntensity}
+                                        onChange={handleRangeChange}
+                                        className="w-full"
+                                    />
+                                    <div className="flex justify-between text-xs text-neutral-500 mt-1">
+                                        <span>Minimal</span>
+                                        <span>Moderate</span>
+                                        <span>Intense</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SECTION 4: TOLERANCE PROFILE */}
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-bold text-neutral-500 border-b border-neutral-900 pb-2 mb-4 tracking-widest">
+                                SECTOR 04 // TOLERANCE PROFILE
+                            </h3>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {/* 12. SIDE EFFECTS */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Side Effects
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="sideEffects"
+                                            value={formData.sideEffects}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="NONE (Clean Energy)">NONE (Clean Energy)</option>
+                                            <option value="Minor Jitters">Minor Jitters</option>
+                                            <option value="Slight Nausea">Slight Nausea</option>
+                                            <option value="Heart Palpitations">Heart Palpitations</option>
+                                            <option value="Crash / Fatigue">Crash / Fatigue</option>
+                                            <option value="Other (Specify in Log)">Other (Specify in Log)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                {/* OTHER SIDE EFFECT SPECIFICATION */}
+                                {formData.sideEffects === 'Other (Specify in Log)' && (
+                                    <div className="space-y-3">
+                                        <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                            Specify Other Side Effect
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="otherSideEffect"
+                                            value={formData.otherSideEffect || ''}
+                                            onChange={handleChange}
+                                            placeholder="Describe the side effect..."
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono placeholder-neutral-700 focus-terminal transition-colors"
+                                        />
+                                    </div>
+                                )}
+                                
+                                {/* 13. FLAVOR MATRIX */}
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                        Flavor Matrix
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            name="flavorMatrix"
+                                            value={formData.flavorMatrix}
+                                            onChange={handleChange}
+                                            className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                        >
+                                            <option value="Approved">Approved</option>
+                                            <option value="Too Spicy">Too Spicy</option>
+                                            <option value="Too Tart">Too Tart</option>
+                                            <option value="Too Earthy">Too Earthy</option>
+                                            <option value="Needs Sweetener">Needs Sweetener</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 14. TEXTURE TOLERANCE */}
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                    Texture Tolerance
+                                </label>
+                                <div className="select-wrapper">
+                                    <select
+                                        name="textureTolerance"
+                                        value={formData.textureTolerance}
+                                        onChange={handleChange}
+                                        className="w-full bg-transparent border border-white p-4 text-terminal font-mono appearance-none focus-terminal transition-colors"
+                                    >
+                                        <option value="Seamless / Smooth">Seamless / Smooth</option>
+                                        <option value="Noticeable but Fine">Noticeable but Fine</option>
+                                        <option value="Slightly Gritty">Slightly Gritty</option>
+                                        <option value="Unpleasant Sediment">Unpleasant Sediment</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SECTION 5: FIELD LOG */}
+                        <div className="space-y-6">
+                            <h3 className="text-xs font-bold text-neutral-500 border-b border-neutral-900 pb-2 mb-4 tracking-widest">
+                                SECTOR 05 // FIELD LOG
+                            </h3>
+
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-neutral-400 tracking-widest uppercase">
+                                    Narrative Field Log
+                                </label>
+                                <textarea 
+                                    name="log"
+                                    value={formData.log}
+                                    onChange={handleChange}
+                                    placeholder="// Document your complete experience with environmental factors, task outcomes, and subjective observations..."
+                                    rows="6"
+                                    className="w-full bg-transparent border border-white p-4 text-terminal font-mono placeholder-neutral-700 focus-terminal transition-colors"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        {/* SUBMIT BUTTON */}
+                        <div className="pt-6">
+                            <button 
+                                type="submit"
+                                className="w-full md:w-auto bg-transparent border-2 border-terminal text-terminal font-mono font-bold py-4 px-8 tracking-widest uppercase hover-terminal transition-colors duration-300"
+                            >
+                                TRANSMIT FIELD REPORT
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FeedbackForm />);
+    </script>
+</body>
+</html>
