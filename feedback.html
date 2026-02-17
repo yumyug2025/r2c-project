@@ -643,7 +643,9 @@
     <!-- Vercel Analytics -->
     <script type="module">
         import { inject } from 'https://esm.sh/@vercel/analytics';
+        import { SpeedInsights } from 'https://esm.sh/@vercel/speed-insights/react';
         inject();
+        // Speed Insights will automatically track performance
     </script>
 </body>
 </html>
