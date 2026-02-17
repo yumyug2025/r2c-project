@@ -626,11 +626,24 @@ Raw Mango Matrix, Black Salt, and proprietary electrolyte complex.
         root.render(<App />);
     </script>
     <!-- Vercel Analytics -->
-    <script type="module">
-        import { inject } from 'https://esm.sh/@vercel/analytics';
-        import { SpeedInsights } from 'https://esm.sh/@vercel/speed-insights/react';
-        inject();
-        // Speed Insights will automatically track performance
+    <script>
+        // Load Vercel Analytics
+        (function(){
+            var script = document.createElement('script');
+            script.src = 'https://cdn.vercel-insights.com/v1/script.js';
+            script.defer = true;
+            document.head.appendChild(script);
+        })();
+    </script>
+    <!-- Vercel Speed Insights -->
+    <script>
+        // Load Speed Insights
+        (function(){
+            var script = document.createElement('script');
+            script.src = 'https://cdn.speedinsights.vercel.app/script.js';
+            script.defer = true;
+            document.head.appendChild(script);
+        })();
     </script>
 </body>
 </html>
